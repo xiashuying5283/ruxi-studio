@@ -217,6 +217,10 @@ def create_app(test_config=None):
         d = body(); kind = d.get('kind')
         if kind not in ['script', 'shotlist', 'image', 'video']:
             return fail('不支持的生成任务')
+        character_id = schema.clean_text(d.get('characterId', ''), 100)
+        character = next((x for x in p['characters'] if x['id'] == character_id), None)
+        if character_id and (kind != 'image' or not character):
+            return fail('角色形象任务必须关联本项目中已有角色，且类型为图片')
         mode = 'text' if kind in ['script', 'shotlist'] else kind
         c = providers.config(mode)
         if not c['key']:
@@ -242,7 +246,8 @@ def create_app(test_config=None):
         key = schema.clean_text(d.get('idempotencyKey', ''), 100)
         if len(key) < 16:
             return fail('缺少有效请求标识，请刷新重试')
-        req = {'prompt': prompt, 'referenceIds': refs, 'duration': duration, 'ratio': p['ratio'],
+        req = {'prompt': prompt, 'referenceIds': refs, 'duration': duration, 'ratio': '9:16' if character_id else p['ratio'],
+               'characterId': character_id, 'characterName': character['name'] if character else '',
                'model': c['model'], 'adapter': c['adapter'], 'shotId': d.get('shotId', ''),
                'episodeId': d.get('episodeId', ''), 'context': {
                    'title': p['title'], 'genre': p['genre'], 'style': p['style'],

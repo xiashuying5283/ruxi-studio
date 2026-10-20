@@ -52,9 +52,17 @@ let polling,
   previewTimer = null,
   previewIndex = 0,
   previewPlaying = false;
+function themeControl() {
+  return b(
+    "theme-menu",
+    "◐",
+    "iconbtn ghost theme-control",
+    'aria-label="切换主题" title="切换浅色、深色或跟随系统"',
+  );
+}
 function login() {
   clearInterval(polling);
-  root.innerHTML = `<div class="login-shell"><section class="login-brand"><a class="wordmark"><img src="/static/mark.svg" alt=""><div><strong>入戏</strong><small>STUDIO</small></div></a><div><div class="eyebrow" style="color:var(--mint);margin-bottom:22px">THE NEXT SCENE IS YOURS.</div><h1>你想讲的故事，<br>值得被看见。</h1><p>从第一行剧本，到最后一个镜头。<br>属于你的 AI 短剧制作工作室。</p></div><span class="tiny muted">独立部署 · 私有素材 · 多模型创作</span></section><section class="login-form"><form id="login-form"><span class="eyebrow">WELCOME BACK</span><h2 style="margin-top:13px">进入你的工作室</h2><p>输入部署时设置的工作室密码。</p><div class="field"><label for="password">工作室密码</label><input id="password" name="password" type="password" autocomplete="current-password" required minlength="12" placeholder="至少 12 个字符"></div><div class="error" id="login-error" role="alert"></div><button class="primary" type="submit">解锁工作室 ${icon("arrow")}</button><p class="tiny" style="margin-top:24px">密码由服务器管理员配置。密钥和素材不会发送到本工作台以外的服务，除非你主动发起 AI 生成。</p></form></section></div>`;
+  root.innerHTML = `<div class="login-shell"><div class="login-theme">${themeControl()}</div><section class="login-brand"><a class="wordmark"><img src="/static/mark.svg" alt=""><div><strong>入戏</strong><small>STUDIO</small></div></a><div><div class="eyebrow" style="color:var(--mint);margin-bottom:22px">THE NEXT SCENE IS YOURS.</div><h1>你想讲的故事，<br>值得被看见。</h1><p>从第一行剧本，到最后一个镜头。<br>属于你的 AI 短剧制作工作室。</p></div><span class="tiny muted">独立部署 · 私有素材 · 多模型创作</span></section><section class="login-form"><form id="login-form"><span class="eyebrow">WELCOME BACK</span><h2 style="margin-top:13px">进入你的工作室</h2><p>输入部署时设置的工作室密码。</p><div class="field"><label for="password">工作室密码</label><input id="password" name="password" type="password" autocomplete="current-password" required minlength="12" placeholder="至少 12 个字符"></div><div class="error" id="login-error" role="alert"></div><button class="primary" type="submit">解锁工作室 ${icon("arrow")}</button><p class="tiny" style="margin-top:24px">密码由服务器管理员配置。密钥和素材不会发送到本工作台以外的服务，除非你主动发起 AI 生成。</p></form></section></div>`;
 }
 async function load() {
   S.config = await api("/config");
@@ -94,7 +102,7 @@ function render() {
   if (!S.project && !["projects", "settings"].includes(S.page))
     S.page = "projects";
   const p = S.project;
-  root.innerHTML = `<aside class="sidebar"><a class="wordmark" href="#" data-action="navigate" data-page="projects"><img src="/static/mark.svg" alt="入戏标志"><div><strong>入戏</strong><small>STUDIO</small></div></a><span class="workspace-label">工作室 / WORKSPACE</span><nav class="navgroup">${navs.map(([key, label, ico], i) => `${i === 1 ? '<div class="workspace-label">当前项目</div>' : ""}<button class="navbutton ${S.page === key ? "active" : ""}" data-action="navigate" data-page="${key}" ${key !== "projects" && !p ? "disabled" : ""} title="${label}">${icon(ico)}<span>${label}</span>${key === "jobs" && S.jobs.some((j) => ["queued", "running", "submitted"].includes(j.state)) ? `<span class="count">${S.jobs.filter((j) => ["queued", "running", "submitted"].includes(j.state)).length}</span>` : ""}</button>`).join("")}</nav><div class="navfooter"><button class="navbutton ${S.page === "settings" ? "active" : ""}" data-action="navigate" data-page="settings" title="模型与设置">${icon("settings")}<span>模型与设置</span></button><div class="owner row"><span class="avatar">导</span><div class="grow"><strong class="tiny">我的工作室</strong><p class="tiny">独立部署版</p></div>${b("logout", icon("logout"), "iconbtn ghost", 'aria-label="退出登录"')}</div></div></aside><main class="main"><header class="topbar"><div class="row">${b("menu", icon("menu"), "mobile-menu iconbtn ghost", 'aria-label="打开导航"')}<div class="breadcrumb"><span>工作室</span><span>/</span><span>${esc(navs.find((x) => x[0] === S.page)?.[1] || "模型与设置")}</span></div></div><div class="row">${p ? `<span class="saved" id="save-label">${S.saveError ? "保存失败 · 请导出草稿" : S.dirty ? "未保存" : "已保存到服务器"}</span>${b("recover-draft", "恢复草稿", "ghost tiny " + (sessionStorage.getItem("ruxi-draft-" + p.id) ? "" : "hide"), 'id="draft-button"')}<select class="project-select" id="project-select" aria-label="切换项目">${S.projects.map((x) => `<option value="${x.id}" ${x.id === p.id ? "selected" : ""}>${esc(x.title)}</option>`).join("")}</select>${b("export-json", icon("down"), "iconbtn ghost", 'aria-label="导出项目草稿"')}` : `<span class="badge green"><span class="dot"></span> 私有工作室</span>`}</div></header>${
+  root.innerHTML = `<aside class="sidebar"><a class="wordmark" href="#" data-action="navigate" data-page="projects"><img src="/static/mark.svg" alt="入戏标志"><div><strong>入戏</strong><small>STUDIO</small></div></a><span class="workspace-label">工作室 / WORKSPACE</span><nav class="navgroup">${navs.map(([key, label, ico], i) => `${i === 1 ? '<div class="workspace-label">当前项目</div>' : ""}<button class="navbutton ${S.page === key ? "active" : ""}" data-action="navigate" data-page="${key}" ${key !== "projects" && !p ? "disabled" : ""} title="${label}">${icon(ico)}<span>${label}</span>${key === "jobs" && S.jobs.some((j) => ["queued", "running", "submitted"].includes(j.state)) ? `<span class="count">${S.jobs.filter((j) => ["queued", "running", "submitted"].includes(j.state)).length}</span>` : ""}</button>`).join("")}</nav><div class="navfooter"><button class="navbutton ${S.page === "settings" ? "active" : ""}" data-action="navigate" data-page="settings" title="模型与设置">${icon("settings")}<span>模型与设置</span></button><div class="owner row"><span class="avatar">导</span><div class="grow"><strong class="tiny">我的工作室</strong><p class="tiny">独立部署版</p></div>${b("logout", icon("logout"), "iconbtn ghost", 'aria-label="退出登录"')}</div></div></aside><main class="main"><header class="topbar"><div class="row">${b("menu", icon("menu"), "mobile-menu iconbtn ghost", 'aria-label="打开导航"')}<div class="breadcrumb"><span>工作室</span><span>/</span><span>${esc(navs.find((x) => x[0] === S.page)?.[1] || "模型与设置")}</span></div></div><div class="row">${themeControl()}${p ? `<span class="saved" id="save-label">${S.saveError ? "保存失败 · 请导出草稿" : S.dirty ? "未保存" : "已保存到服务器"}</span>${b("recover-draft", "恢复草稿", "ghost tiny " + (sessionStorage.getItem("ruxi-draft-" + p.id) ? "" : "hide"), 'id="draft-button"')}<select class="project-select" id="project-select" aria-label="切换项目">${S.projects.map((x) => `<option value="${x.id}" ${x.id === p.id ? "selected" : ""}>${esc(x.title)}</option>`).join("")}</select>${b("export-json", icon("down"), "iconbtn ghost", 'aria-label="导出项目草稿"')}` : `<span class="badge green"><span class="dot"></span> 私有工作室</span>`}</div></header>${
     p && !["projects", "settings"].includes(S.page)
       ? `<div class="page-tabs">${[
           ["overview", "项目"],
@@ -187,7 +195,7 @@ function entityModal(type, entityId = "") {
   };
   modal(
     title(type, entityId),
-    `${f("name", isChar ? "角色姓名 / 称呼" : "场景名称", e.name)}${isChar ? f("role", "人物定位", e.role) + f("appearance", "年龄、面容与体态", e.appearance, { multi: true }) + f("costume", "服装、配饰与固定道具", e.costume, { multi: true }) + f("motivation", "目标与人物动机", e.motivation, { multi: true }) + f("voice", "声音与表演提示", e.voice) : f("description", "空间、陈设与环境", e.description, { multi: true }) + f("lighting", "光线、色彩与气氛", e.lighting, { multi: true })}${f("referenceId", "视觉参考", e.referenceId, { options: [{ value: "", label: "暂不绑定" }, ...S.assets.filter((a) => a.mime.startsWith("image/")).map((a) => ({ value: a.id, label: a.name }))] })}<div class="notice">参考图可在素材库上传，也可先在分镜工作台生成后绑定。角色和场景的文字设定会用于构建镜头提示词。</div>`,
+    `${f("name", isChar ? "角色姓名 / 称呼" : "场景名称", e.name)}${isChar ? f("role", "人物定位", e.role) + f("appearance", "年龄、面容与体态", e.appearance, { multi: true }) + f("costume", "服装、配饰与固定道具", e.costume, { multi: true }) + f("motivation", "目标与人物动机", e.motivation, { multi: true }) + f("voice", "声音与表演提示", e.voice) : f("description", "空间、陈设与环境", e.description, { multi: true }) + f("lighting", "光线、色彩与气氛", e.lighting, { multi: true })}${f("referenceId", "视觉参考", e.referenceId, { options: [{ value: "", label: "暂不绑定" }, ...S.assets.filter((a) => a.mime.startsWith("image/")).map((a) => ({ value: a.id, label: a.name }))] })}${isChar ? `<div class="row wrap reference-upload-tools">${b("upload-character-reference", icon("upload") + " 上传参考图")}${b("clear-character-reference", "取消绑定", "ghost")}<span class="tiny muted">JPG / PNG / WebP · 最大 20MB</span></div><section class="character-portrait-panel"><div class="row between"><h3>AI 角色形象</h3><span class="ai-mark">定妆图</span></div><div id="entity-reference-preview">${characterReferencePreview(e.referenceId)}</div>${f("portraitBrief", "形象补充要求（可选）", "", { multi: true, help: "例如：半身正面，短发，米色风衣，自然光；不确定的外貌可交给 AI 设计。" })}${b("generate-character-image", icon("spark") + " AI 生成角色形象", "primary inspector-generate")}<p class="tiny muted">${S.config.providers.image.configured ? "保存角色草稿后确认生成，候选图会保留在任务与素材库。" : "尚未配置图片模型密钥；可以先填写角色并保存，配置后即可生成。"}</p>${b("character-jobs", "查看生成候选 →", "ghost tiny")}</section>` : ""}<div class="notice">${isChar ? "可以直接用 AI 设计定妆图。只填名字时由 AI 提出完整形象；已有外貌与服装会作为约束，结果确认后再绑定。" : "参考图可在素材库上传，场景设定会用于构建镜头提示词。"}</div>`,
     {
       footer:
         (entityId ? b("delete-entity", "删除", "ghost danger") : "") +
@@ -195,8 +203,101 @@ function entityModal(type, entityId = "") {
         b("save-entity", "保存档案", "primary"),
     },
   );
-  modalData = { type, entityId, entity: e };
+  modalData = { type, entityId, entity: e, modalToken: id() };
 }
+function characterReferencePreview(referenceId) {
+  const url = imageURL(referenceId);
+  return url
+    ? `<img class="character-reference-preview" src="${url}" alt="角色参考图预览">`
+    : `<div class="character-reference-empty">${icon("users")}<span>上传参考图，或用 AI 生成定妆图</span></div>`;
+}
+function refreshCharacterReference() {
+  const box = modalRoot.querySelector("#entity-reference-preview");
+  if (box) box.innerHTML = characterReferencePreview(get("referenceId"));
+}
+function uploadCharacterReference() {
+  const token = modalData.modalToken,
+    pid = S.project.id;
+  const input = document.querySelector("#file-input");
+  input.accept = "image/png,image/jpeg,image/webp";
+  input.value = "";
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      toast("请选择 JPG、PNG 或 WebP 图片");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast("参考图片不能超过 20MB");
+      return;
+    }
+    const button = modalRoot.querySelector(
+      '[data-action="upload-character-reference"]',
+    );
+    if (button) button.disabled = true;
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      const a = await api("/projects/" + pid + "/assets", {
+        method: "POST",
+        form,
+      });
+      if (S.project?.id !== pid) return;
+      S.assets.unshift(a);
+      if (modalData.modalToken !== token) {
+        toast("图片已上传至素材库，可稍后绑定");
+        return;
+      }
+      const select = modalRoot.querySelector('[data-form="referenceId"]');
+      if (!select) {
+        toast("图片已上传至素材库");
+        return;
+      }
+      const option = document.createElement("option");
+      option.value = a.id;
+      option.textContent = a.name;
+      select.append(option);
+      select.value = a.id;
+      refreshCharacterReference();
+      toast("参考图已上传，保存角色后生效；AI 生成时会使用此图作为参考");
+    } catch (e) {
+      toast(e.message);
+    } finally {
+      if (button) button.disabled = false;
+      input.value = "";
+    }
+  };
+  input.click();
+}
+
+async function persistEntity() {
+  const { type, entityId, entity: e } = modalData;
+  let keys =
+    type === "characters"
+      ? [
+          "name",
+          "role",
+          "appearance",
+          "costume",
+          "motivation",
+          "voice",
+          "referenceId",
+        ]
+      : ["name", "description", "lighting", "referenceId"];
+  let result = { id: e.id };
+  for (const key of keys) result[key] = get(key);
+  if (!result.name.trim()) throw Error("请输入名称");
+  let index = S.project[type].findIndex((x) => x.id === entityId);
+  if (index >= 0) S.project[type][index] = result;
+  else S.project[type].push(result);
+  markDirty();
+  await save();
+  modalData.entityId = result.id;
+  modalData.entity = result;
+  return result;
+}
+
 function title(type, entityId) {
   return (
     (entityId ? "编辑" : "新建") +
@@ -307,7 +408,13 @@ async function uploadAsset(target = "") {
 function jobConfirmation(
   kind,
   prompt,
-  { shotId = "", episodeId = "", referenceIds = [], duration = 4 } = {},
+  {
+    shotId = "",
+    episodeId = "",
+    characterId = "",
+    referenceIds = [],
+    duration = 4,
+  } = {},
 ) {
   const mode = ["script", "shotlist"].includes(kind) ? "text" : kind,
     c = S.config.providers[mode];
@@ -317,7 +424,7 @@ function jobConfirmation(
   }
   modal(
     "确认生成任务",
-    `<div class="row between"><h3>${{ script: "剧本创作", shotlist: "分镜拆解", image: "图片生成", video: "视频生成" }[kind]}</h3><span class="badge green">${esc(c.model)}</span></div><div class="notice warning">本次会把生成要求、项目设定及选中的参考素材发送给已配置的服务商，并产生 API 费用。费用以服务商账单为准。</div><label>本次生成要求</label><div class="ai-result">${esc(prompt)}</div><p class="tiny muted" style="margin-top:15px">参考图片 ${referenceIds.length} 张${kind === "video" ? " · 时长 " + duration + " 秒" : ""}。结果保存为候选，不覆盖已有作品。</p>`,
+    `<div class="row between"><h3>${characterId ? "角色形象 · " : ""}${{ script: "剧本创作", shotlist: "分镜拆解", image: "图片生成", video: "视频生成" }[kind]}</h3><span class="badge green">${esc(c.model)}</span></div><div class="notice warning">本次会把生成要求、项目设定及选中的参考素材发送给已配置的服务商，并产生 API 费用。费用以服务商账单为准。</div><label>本次生成要求</label><div class="ai-result">${esc(prompt)}</div><p class="tiny muted" style="margin-top:15px">参考图片 ${referenceIds.length} 张${kind === "video" ? " · 时长 " + duration + " 秒" : ""}。结果保存为候选，不覆盖已有作品。</p>`,
     {
       wide: true,
       footer:
@@ -331,6 +438,7 @@ function jobConfirmation(
       prompt,
       shotId,
       episodeId,
+      characterId,
       referenceIds,
       duration,
       idempotencyKey: id(),
@@ -376,7 +484,9 @@ function showJob(jid) {
         b(
           "apply-job",
           r.asset
-            ? "绑定到目标镜头"
+            ? j.request.characterId
+              ? "设为角色参考图"
+              : "绑定到目标镜头"
             : j.kind === "shotlist"
               ? "追加到目标分集"
               : "采用为分集剧本",
@@ -415,6 +525,13 @@ async function applyJob() {
     );
     S.episodeId = e.id;
     S.shotId = p.shots.at(-j.result.shots.length).id;
+  } else if (j.request.characterId) {
+    const c = p.characters.find((x) => x.id === j.request.characterId);
+    if (!c) throw Error("目标角色已不存在，图片仍保留在素材库中");
+    c.referenceId = j.result.asset.id;
+    if (!S.assets.some((a) => a.id === j.result.asset.id))
+      S.assets.unshift(j.result.asset);
+    S.page = "characters";
   } else {
     let s = p.shots.find((x) => x.id === j.request.shotId);
     if (!s) throw Error("目标镜头已不存在，结果仍在素材库中，可手动绑定");
@@ -492,6 +609,32 @@ function drawPreview() {
   }
 }
 const actions = {
+  "theme-menu": () => {
+    const current = window.RuxiTheme.get();
+    modal(
+      "外观主题",
+      `<p class="muted" style="margin-bottom:18px">选择适合你的显示方式，设置会保存在当前浏览器。</p><div class="theme-options">${[
+        ["light", "浅色", "明亮背景，提高文字与表单的可读性"],
+        ["dark", "深色", "适合低光环境和画面预览"],
+        ["system", "跟随系统", "随设备的外观设置自动切换"],
+      ]
+        .map(([value, label, description]) =>
+          b(
+            "set-theme",
+            `<strong>${label}${current === value ? " ✓" : ""}</strong><span>${description}</span>`,
+            "theme-option " + (current === value ? "selected" : ""),
+            `data-theme="${value}"`,
+          ),
+        )
+        .join("")}</div>`,
+      { footer: b("close-modal", "关闭") },
+    );
+  },
+  "set-theme": (el) => {
+    window.RuxiTheme.set(el.dataset.theme);
+    closeModal();
+    toast("主题已切换并保存");
+  },
   navigate: async (el) => {
     await save();
     S.page = el.dataset.page || "storyboard";
@@ -576,28 +719,45 @@ const actions = {
   },
   "edit-entity": (el) => entityModal(el.dataset.type || S.page, el.dataset.id),
   "save-entity": async () => {
-    const { type, entityId, entity: e } = modalData;
-    let keys =
-      type === "characters"
-        ? [
-            "name",
-            "role",
-            "appearance",
-            "costume",
-            "motivation",
-            "voice",
-            "referenceId",
-          ]
-        : ["name", "description", "lighting", "referenceId"];
-    let result = { id: e.id };
-    for (const key of keys) result[key] = get(key);
-    if (!result.name.trim()) throw Error("请输入名称");
-    let index = S.project[type].findIndex((x) => x.id === entityId);
-    if (index >= 0) S.project[type][index] = result;
-    else S.project[type].push(result);
-    markDirty();
-    await save();
+    await persistEntity();
     closeModal();
+    render();
+  },
+  "upload-character-reference": uploadCharacterReference,
+  "clear-character-reference": () => {
+    const select = modalRoot.querySelector('[data-form="referenceId"]');
+    if (select) select.value = "";
+    refreshCharacterReference();
+    toast("已取消绑定，原图片保留在素材库");
+  },
+  "generate-character-image": async () => {
+    if (!S.config.providers.image.configured) {
+      toast("图片模型密钥尚未配置，角色内容会保留在当前窗口");
+      return;
+    }
+    const extra = get("portraitBrief");
+    const c = await persistEntity();
+    const prompt = [
+      `为短剧设计原创角色定妆图，视觉风格：${S.project.style}，题材：${S.project.genre}。`,
+      `世界与时代：${S.project.setting || "依据项目题材合理设计"}。`,
+      `角色：${c.name}。人物定位：${c.role || "待定"}。`,
+      `外貌与体态：${c.appearance || "由你提出有辨识度、符合题材的原创设计"}。`,
+      `服装与道具：${c.costume || "由你设计，与时代和人物定位一致"}。`,
+      `人物动机与气质：${c.motivation || "依据人物定位设计"}。`,
+      "单一角色，竖幅定妆照，面部清晰，服装材质可辨，简洁背景；不加文字、水印或拼贴。已填写的特征必须保留，未填写的细节可以原创设计。",
+      extra ? "补充要求：" + extra : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    jobConfirmation("image", prompt, {
+      characterId: c.id,
+      referenceIds: c.referenceId ? [c.referenceId] : [],
+    });
+  },
+  "character-jobs": async () => {
+    await persistEntity();
+    closeModal();
+    S.page = "jobs";
     render();
   },
   "delete-entity": async () => {
@@ -991,6 +1151,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("change", async (e) => {
   try {
     let el = e.target;
+    if (el.dataset.form === "referenceId") refreshCharacterReference();
     if (el.dataset.bind) {
       setBinding(el.dataset.bind, el.value);
       return;

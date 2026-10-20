@@ -93,6 +93,34 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(cancel.status_code, 200)
         self.assertEqual(self.post('/jobs/'+first.json['id']+'/cancel', {}).status_code, 409)
 
+    @patch.dict(os.environ, {'OPENAI_API_KEY': 'unit-test-key'})
+    def test_character_portrait_targets_character_without_overwriting_reference(self):
+        p = project(); p['characters'] = [{'id':'hero', 'name':'检票员', 'appearance':'短发，瘦削'}]
+        p = self.post('/projects', p).json
+        r = self.post('/projects/'+p['id']+'/jobs', {
+            'kind':'image', 'characterId':'hero', 'prompt':'角色定妆图', 'idempotencyKey':store.uid()})
+        self.assertEqual(r.status_code, 202)
+        self.assertEqual(r.json['request']['characterId'], 'hero')
+        self.assertEqual(r.json['request']['characterName'], '检票员')
+        self.assertEqual(r.json['request']['ratio'], '9:16')
+        with store.connect() as db:
+            row=db.execute('SELECT * FROM jobs WHERE id=?',(r.json['id'],)).fetchone()
+        with patch('server.providers.image_generate', return_value=png()) as generate:
+            process(row)
+        self.assertEqual(generate.call_args.args[1], '9:16')
+        self.assertEqual(store.get_project(p['id'])['characters'][0]['referenceId'], '')
+        with store.connect() as db:
+            result=store.public_job(db.execute('SELECT * FROM jobs WHERE id=?',(r.json['id'],)).fetchone())
+        self.assertEqual(result['state'],'completed')
+        self.assertTrue(result['result']['asset']['mime'].startswith('image/'))
+
+    @patch.dict(os.environ, {'OPENAI_API_KEY': 'unit-test-key'})
+    def test_character_portrait_rejects_missing_character_and_wrong_kind(self):
+        path='/projects/'+self.p['id']+'/jobs'
+        for kind in ['image','video','script']:
+            r=self.post(path, {'kind':kind,'characterId':'not-in-project','prompt':'test','idempotencyKey':store.uid()})
+            self.assertEqual(r.status_code,400)
+
     def test_missing_key_is_not_fake_success(self):
         with patch.dict(os.environ, {'OPENAI_API_KEY': '', 'TEXT_API_KEY': ''}):
             r = self.post('/projects/'+self.p['id']+'/jobs', {'kind':'script','prompt':'test','idempotencyKey':store.uid()})
